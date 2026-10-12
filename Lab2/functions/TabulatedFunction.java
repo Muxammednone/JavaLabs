@@ -5,9 +5,6 @@ public class TabulatedFunction {
     private int len;
     private int capacity;
 
-    public int getLen(){
-        return len;
-    }
     public int getCapacity(){
         return capacity;
     }
@@ -61,15 +58,20 @@ public class TabulatedFunction {
     }
 
     public FunctionPoint getPoint(int index){
-        return points[index];
+        // Инкапсуляцию поправил, getPoint возвращает копию 
+        // чтобы мы не могли изменить эту точку в массиве
+        // для этого у меня есть сеттеры
+        return new FunctionPoint(points[index]);
     }
 
     public void setPoint(int index, FunctionPoint point){
-        if (index == 0 && point.getX() >= points[1].getX()) return;
-        else if (index == getPointsCount() - 1 && point.getX() <= getPoint(getPointsCount() - 2).getX()) return;
-        else if (point.getX() <= getPoint(index - 1).getX() || point.getX() >= getPoint(index + 1).getX()) return;
+        // улучшил проверку интервала
+        if (
+            (index > 0 && point.getX() <= getPointX(index - 1)) || 
+            (index < len - 1 && point.getX() >= getPointX(index  + 1))
+        ) return;
 
-        points[index] = point;
+        points[index] = new FunctionPoint(point);
     }   
 
     public double getPointX(int index){
@@ -98,16 +100,25 @@ public class TabulatedFunction {
     }
 
     public void addPoint(FunctionPoint point){
+        // нахождение интервала и проверка на равенство точек
+        // потом проверка на выделение памяти
+        // сдвиг елементов
+
+        int di = 0;
+        while (di != len && point.getX()  > getPointX(di)){
+            di++;
+        }
+
+        if (di < len && point.getX() == getPointX(di)) {
+            return; 
+        }
+
+
         if (len == capacity){
             FunctionPoint[] newPoints = new FunctionPoint[capacity * 2];
             System.arraycopy(points, 0, newPoints, 0, len);
             this.points = newPoints;
             capacity = capacity * 2;
-        }
-
-        int di = 0;
-        while (di != len && point.getX()  > getPointX(di)){
-            di++;
         }
 
         
