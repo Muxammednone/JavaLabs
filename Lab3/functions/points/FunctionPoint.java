@@ -1,4 +1,4 @@
-package functions;
+package functions.points;
 
 public class FunctionPoint {
 

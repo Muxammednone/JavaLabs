@@ -1,4 +1,4 @@
-package functions;
+package functions.points;
 
 public class FunctionPointString extends FunctionPoint{
     private String s;
@@ -18,7 +18,7 @@ public class FunctionPointString extends FunctionPoint{
 
     public FunctionPointString(FunctionPointString point) {
         super(point.getX(), point.getY());
-        this.s = s;
+        this.s = point.s;
     }
 
     public FunctionPointString(){

@@ -1,32 +1,39 @@
-package functions;
+package functions.functions;
+
+import functions.exceptions.FunctionPointIndexOutOfBoundsException;
+import functions.exceptions.InappropriateFunctionPointException;
+import functions.factories.PointFactory;
+import functions.points.FunctionPoint;
 
 public class ArrayTabulatedFunction<T extends FunctionPoint> implements TabulatedFunction<T>{
     private T[] points;
     private int len;
     private int capacity;
 
+    private final PointFactory<T> factory;
+
     public int getCapacity(){
         return capacity;
     }
 
-    public ArrayTabulatedFunction(double leftX, double rightX, int pointsCount){
-        this(leftX, rightX,  new double[pointsCount]);
+    public ArrayTabulatedFunction(double leftX, double rightX, int pointsCount, PointFactory<T> factory){
+        this(leftX, rightX, new double[pointsCount], factory);
     }
 
-    public ArrayTabulatedFunction(double leftX, double rightX, double[] values){
+    public ArrayTabulatedFunction(double leftX, double rightX, double[] values, PointFactory<T> factory){
         int n = values.length;
         if (rightX <= leftX || n < 2) throw new IllegalArgumentException();
 
+        this.factory = factory;
         double step = (rightX - leftX) / (n - 1);
-
-        FunctionPoint[] points = new FunctionPoint[n * 2];
 
         this.len = n;
         this.capacity = n * 2;
+        T[] points = factory.createArray(capacity);
 
         for (int i = 0; i < n; i++){
             double x = leftX + step * i;
-            points[i] = new FunctionPoint(x, values[i]);
+            points[i] = factory.create(x, values[i]);
         }
 
         this.points = points;
@@ -64,16 +71,16 @@ public class ArrayTabulatedFunction<T extends FunctionPoint> implements Tabulate
     }
 
     @Override
-    public FunctionPoint getPoint(int index){
+    public T getPoint(int index){
         if (index < 0 || index >= len) throw new FunctionPointIndexOutOfBoundsException("function point index out of bounds");
         // Инкапсуляцию поправил, getPoint возвращает копию 
         // чтобы мы не могли изменить эту точку в массиве
         // для этого у меня есть сеттеры
-        return new FunctionPoint(points[index]);
+        return this.factory.copy(points[index]);
     }
 
     @Override
-    public void setPoint(int index, FunctionPoint point)
+    public void setPoint(int index, T point)
         throws InappropriateFunctionPointException{
             if (index < 0 || index >= len) throw new FunctionPointIndexOutOfBoundsException("function point index out of bounds");
             // улучшил проверку интервала
@@ -82,7 +89,7 @@ public class ArrayTabulatedFunction<T extends FunctionPoint> implements Tabulate
                 (index < len - 1 && point.getX() >= getPointX(index  + 1))
             ) throw new InappropriateFunctionPointException("inappropriate exception");
 
-            points[index] = new FunctionPoint(point);
+            points[index] = this.factory.copy(point);
     }   
 
     @Override
@@ -127,7 +134,7 @@ public class ArrayTabulatedFunction<T extends FunctionPoint> implements Tabulate
     }
 
     @Override
-    public void addPoint(FunctionPoint point)
+    public void addPoint(T point)
         throws InappropriateFunctionPointException{
         // нахождение интервала и проверка на равенство точек
         // потом проверка на выделение памяти
@@ -144,7 +151,7 @@ public class ArrayTabulatedFunction<T extends FunctionPoint> implements Tabulate
 
 
         if (len == capacity){
-            FunctionPoint[] newPoints = new FunctionPoint[capacity * 2];
+            T[] newPoints = this.factory.createArray(capacity * 2);
             System.arraycopy(points, 0, newPoints, 0, len);
             this.points = newPoints;
             capacity = capacity * 2;
@@ -154,7 +161,7 @@ public class ArrayTabulatedFunction<T extends FunctionPoint> implements Tabulate
         for (int i = len; i > di; i--){
             points[i] = points[i - 1];
         }
-        points[di] = new FunctionPoint(point);
+        points[di] = this.factory.copy(point);
         len++;
     }
 
