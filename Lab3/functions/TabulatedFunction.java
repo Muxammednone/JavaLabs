@@ -1,4 +1,4 @@
-package functions.functions;
+package functions;
 
 import functions.exceptions.InappropriateFunctionPointException;
 import functions.points.FunctionPoint;
