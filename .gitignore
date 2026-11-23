@@ -1,11 +1,26 @@
 # Java compiled files
 *.class
 
-# Build output
+# Build output (all labs)
 out/
 build/
 target/
 .gradle/
+*.war
+*.ear
+
+# Maven local cache and generated metadata
+.m2/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+# Keep pom.xml, .mvn configuration and Maven Wrapper in Git.
+# JARs are not ignored globally: Lab1 contains a lab assignment JAR.
 
 # Local IDE settings
 .idea/
@@ -13,11 +28,35 @@ target/
 *.ipr
 *.iws
 .vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Temporary files and logs
+/tmp/
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*~
+
+# Generated lab serialization / I/O output
+/ser_obj
+/ser_obj.txt
+/test2
+/test3
+/Lab*/ser_obj
+/Lab*/ser_obj.txt
+/Lab*/test2
+/Lab*/test3
 
 # OS temporary files
 .DS_Store
 Thumbs.db
 Desktop.ini
+$RECYCLE.BIN/
 
 # JVM crash logs
 hs_err_pid*
