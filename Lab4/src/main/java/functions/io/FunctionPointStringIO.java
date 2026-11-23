@@ -13,7 +13,7 @@ public class FunctionPointStringIO implements PointIO<FunctionPointString> {
     }
 
     public PointFactory<FunctionPointString> pointFactory(){
-        return new FunctionPointStringFactory();
+        return FunctionPointStringFactory.INSTANCE;
     }
 
     public void output(FunctionPointString point, DataOutputStream out) throws IOException{

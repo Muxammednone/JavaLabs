@@ -1,5 +1,6 @@
 package functions;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import functions.exceptions.FunctionPointIndexOutOfBoundsException;
@@ -8,6 +9,7 @@ import functions.factories.PointFactory;
 import functions.points.FunctionPoint;
 
 public class ArrayTabulatedFunction<T extends FunctionPoint> implements TabulatedFunction<T>, Serializable{
+    @Serial
     private final static long serialVersionUID = 1L;
     private T[] points;
     private int len;

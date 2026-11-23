@@ -17,7 +17,7 @@ public class FunctionPointIO implements PointIO<FunctionPoint> {
     }
 
     public PointFactory<FunctionPoint> pointFactory(){
-        return new FunctionPointFactory();
+        return FunctionPointFactory.INSTANCE;
     }
 
     public void output(FunctionPoint point, DataOutputStream out) throws IOException{

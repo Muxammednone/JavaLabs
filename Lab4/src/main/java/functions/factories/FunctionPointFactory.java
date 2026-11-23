@@ -1,10 +1,13 @@
 package functions.factories;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import functions.points.FunctionPoint;
 
-public class FunctionPointFactory implements PointFactory<FunctionPoint>, Serializable {
+public enum FunctionPointFactory implements PointFactory<FunctionPoint>, Serializable {
+    INSTANCE;
+    @Serial
     private final static long serialVersionUID = 1L;
     
     public FunctionPoint create(double x, double y){

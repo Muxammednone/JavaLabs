@@ -50,8 +50,7 @@ public class LinkedListTabulatedFunction<T extends FunctionPoint> implements Tab
         lastAccessedIndex = 0;
 
         for (int i = 0; i < count; i++) {
-            T point = (T) in.readObject();
-            addNodeToTail().point = point;
+            addNodeToTail().point = (T) in.readObject();
         }
     }
 
@@ -249,7 +248,7 @@ public class LinkedListTabulatedFunction<T extends FunctionPoint> implements Tab
     @Override
     public void setPointY(int index, double y){
         if (index < 0 || index >= len) throw new FunctionPointIndexOutOfBoundsException("function point index out of bounds");
-         getNodeByIndex(index).point.setY(y);
+        getNodeByIndex(index).point.setY(y);
     }
 
     @Override

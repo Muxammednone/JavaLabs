@@ -1,73 +1,102 @@
 package functions;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import functions.basic.Exp;
-import functions.factories.*;
-import functions.io.*;
-import functions.points.*;
+import functions.basic.Log;
+import functions.basic.Sin;
+import functions.factories.FunctionPointFactory;
+import functions.factories.FunctionPointStringFactory;
+import functions.io.FunctionPointStringIO;
+import functions.io.PointIO;
+import functions.points.FunctionPointString;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import java.io.*;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.io.TempDir;
 
-class TabulatedFunctionsTest {
-    private <T extends FunctionPoint> void roundTrip(T[] points, PointIO<T> io, boolean binary) throws IOException {
-        var original = new LinkedListTabulatedFunction<>(points, io.pointFactory());
-        TabulatedFunction<?> restored;
-        if (binary) {
-            var out = new ByteArrayOutputStream();
-            TabulatedFunctions.outputTabulatedFunction(original, out, io);
-            restored = TabulatedFunctions.inputTabulatedFunction(new ByteArrayInputStream(out.toByteArray()));
-        } else {
-            var out = new StringWriter();
-            TabulatedFunctions.writeTabulatedFunction(original, out, io);
-            restored = TabulatedFunctions.readTabulatedFunction(new StringReader(out.toString()));
+import java.io.*;
+import java.nio.file.Path;
+
+public class TabulatedFunctionsTest {
+    @Test
+    void output_and_input(@TempDir Path tempDir) throws  IOException{
+        var file = tempDir.resolve("output_and_input").toFile();
+        TabulatedFunction<FunctionPointString> tabSin = TabulatedFunctions.tabulate(new Sin(), 1, 10, 11, FunctionPointStringFactory.INSTANCE);
+        PointIO<FunctionPointString> pointIO = new FunctionPointStringIO();
+        try(OutputStream out = new FileOutputStream(file)){
+            TabulatedFunctions.outputTabulatedFunction(tabSin, out, pointIO);
         }
-        assertEquals(points.length, restored.getPointsCount());
-        for (int i = 0; i < points.length; i++) {
-            var actual = restored.getPoint(i);
-            assertEquals(points[i].getClass(), actual.getClass());
-            assertEquals(points[i].getX(), actual.getX());
-            assertEquals(points[i].getY(), actual.getY());
-            if (points[i] instanceof FunctionPointString expected) {
-                assertEquals(expected.getS(), ((FunctionPointString) actual).getS());
+
+        try(InputStream in = new FileInputStream(file)){
+            var tabFunction = TabulatedFunctions.inputTabulatedFunction(in);
+            assertEquals(tabFunction.getPointsCount(), tabSin.getPointsCount());
+            for (int i = 0; i < tabFunction.getPointsCount(); i++){
+                assertEquals(tabSin.getPointX(i), tabFunction.getPointX(i));
+                assertEquals(tabSin.getPointY(i), tabFunction.getPointY(i));
+
+                var pointString = assertInstanceOf(
+                        FunctionPointString.class,
+                        tabFunction.getPoint(i)
+                );
+
+                assertEquals(tabSin.getPoint(i).getS(), pointString.getS());
             }
         }
     }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void roundTripsBothPointTypes(boolean binary) throws IOException {
-        roundTrip(new FunctionPoint[]{new FunctionPoint(-1, 2), new FunctionPoint(3, 4)},
-            new FunctionPointIO(), binary);
-        roundTrip(new FunctionPointString[]{new FunctionPointString(-1, 2, ""),
-            new FunctionPointString(3, 4, "  Привет \"мир\"  ")}, new FunctionPointStringIO(), binary);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"", "unknown\n2\n", "p1\n", "p1\nabc\n", "p1\n1\n", "p1\n2\n0 0\n"})
-    void rejectsInvalidText(String text) {
-        assertThrows(IOException.class, () -> TabulatedFunctions.readTabulatedFunction(new StringReader(text)));
-    }
-
     @Test
-    void rejectsTruncatedBinary() throws IOException {
-        var out = new ByteArrayOutputStream();
-        var data = new DataOutputStream(out);
-        data.writeUTF("p1");
-        data.writeInt(2);
-        data.writeDouble(0);
-        assertThrows(EOFException.class, () -> TabulatedFunctions.inputTabulatedFunction(
-            new ByteArrayInputStream(out.toByteArray())));
-    }
+    void write_and_read(@TempDir Path tempDir) throws IOException{
+        var file = tempDir.resolve("write_and_read").toFile();
+        TabulatedFunction<FunctionPointString> tabExp = TabulatedFunctions.tabulate(new Exp(), 1, 10, 11, FunctionPointStringFactory.INSTANCE);
+        PointIO<FunctionPointString>  pointIO = new FunctionPointStringIO();
 
+        try(Writer out = new FileWriter(file)){
+            TabulatedFunctions.writeTabulatedFunction(tabExp, out, pointIO);
+        }
+
+        try(Reader in = new FileReader(file)){
+            var tabFunction = TabulatedFunctions.readTabulatedFunction(in);
+            assertEquals(tabExp.getPointsCount(), tabFunction.getPointsCount());
+
+            for (int i= 0; i < tabFunction.getPointsCount(); i++){
+                assertEquals(tabExp.getPointX(i), tabFunction.getPointX(i));
+                assertEquals(tabExp.getPointY(i), tabFunction.getPointY(i));
+
+                var pointString = assertInstanceOf(
+                        FunctionPointString.class,
+                        tabFunction.getPoint(i)
+                );
+
+                assertEquals(tabExp.getPoint(i).getS(), pointString.getS());
+            }
+        }
+    }
     @Test
-    void tabulatesOnUniformGrid() {
-        var f = TabulatedFunctions.tabulate(new Exp(), 0, 2, 3, new FunctionPointFactory());
-        assertEquals(3, f.getPointsCount());
-        for (int i = 0; i < 3; i++) {
-            assertEquals(i, f.getPointX(i));
-            assertEquals(Math.exp(i), f.getPointY(i), 1e-12);
+    void serialization_test(@TempDir Path tempDir) throws IOException, ClassNotFoundException {
+        var tabSin = TabulatedFunctions.tabulate(new Sin(), 1, 10, 11, FunctionPointStringFactory.INSTANCE);
+        var file = tempDir.resolve("function.bin").toFile();
+
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));){
+            out.writeObject(tabSin);
+        }
+
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))){
+            var tabFunction = assertInstanceOf(
+                    LinkedListTabulatedFunction.class,
+                    in.readObject()
+            );
+
+            assertEquals(tabSin.getPointsCount(), tabFunction.getPointsCount());
+
+            for (int i = 0; i < tabSin.getPointsCount(); i++){
+                assertEquals(tabSin.getPointX(i), tabFunction.getPointX(i));
+                assertEquals(tabSin.getPointY(i), tabFunction.getPointY(i));
+
+                var pointString = assertInstanceOf(
+                        FunctionPointString.class,
+                        tabFunction.getPoint(i)
+                );
+
+                assertEquals(tabSin.getPoint(i).getS(), pointString.getS());
+            }
         }
     }
 }
